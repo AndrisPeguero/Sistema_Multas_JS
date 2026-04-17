@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QA App Professional</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background-color: #f0f2f5; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .card { border: none; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+    .status-box { font-size: 0.9rem; margin-top: 15px; padding: 10px; border-radius: 8px; display: none; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="row justify-content-center gap-4">
+    <div class="col-md-5 card p-4">
+      <h2 class="text-center mb-4 fw-bold text-primary">Acceso Seguro</h2>
+      <input type="text" id="user" class="form-control mb-3" placeholder="Usuario">
+      <input type="password" id="pass" class="form-control mb-3" placeholder="Contraseña">
+      <button class="btn btn-primary w-100 fw-bold" onclick="ejecutar('login')">Ingresar al Sistema</button>
+      <div id="status-login" class="status-box"></div>
+    </div>
+
+    <div class="col-md-5 card p-4">
+      <h2 class="text-center mb-4 fw-bold text-success">Nuevo Usuario</h2>
+      <input type="text" id="regUser" class="form-control mb-3" placeholder="Ej: tester_qa">
+      <input type="password" id="regPass" class="form-control mb-3" placeholder="Contraseña">
+      <button class="btn btn-success w-100 fw-bold" onclick="ejecutar('register')">Crear Cuenta</button>
+      <div id="status-reg" class="status-box"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // URL Relativa para evitar errores de CORS en CodeSandbox
+  const API_URL = "/api/auth"; 
+
+  async function ejecutar(tipo) {
+    const statusId = tipo === 'login' ? 'status-login' : 'status-reg';
+    const statusBox = document.getElementById(statusId);
+    const u = tipo === 'login' ? document.getElementById("user").value : document.getElementById("regUser").value;
+    const p = tipo === 'login' ? document.getElementById("pass").value : document.getElementById("regPass").value;
+
+    statusBox.style.display = "block";
+    statusBox.innerText = "Conectando...";
+
+    try {
+      const res = await fetch(`${API_URL}/${tipo}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: u, password: p })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        statusBox.className = "status-box bg-success-subtle text-success text-center";
+        statusBox.innerText = tipo === 'login' ? "✅ Bienvenido. Entrando..." : "✅ Usuario registrado";
+        if(data.token) {
+          localStorage.setItem("token", data.token);
+          setTimeout(() => { window.location.href = "/dashboard"; }, 1000);
+        }
+      } else {
+        statusBox.className = "status-box bg-danger-subtle text-danger text-center";
+        statusBox.innerText = "❌ " + data.msg;
+      }
+    } catch (e) {
+      statusBox.className = "status-box bg-warning-subtle text-warning text-center";
+      statusBox.innerText = "🚫 Error: El servidor no responde";
+    }
+  }
+</script>
+</body>
+</html>
